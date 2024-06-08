@@ -2,97 +2,93 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-public abstract class Clothing
-{
-    public decimal Price { get; set; }
-    public string Size { get; set; }
 
-    protected Clothing(decimal price, string size)
+    public class Trousers
     {
-        Price = price;
-        Size = size;
-    }
-}
+        public string Material { get; set; }
+        public int Cost { get; set; }
+        public string Size { get; set; }
 
-public class Trousers : Clothing
-{
-    public string Material { get; set; }
-  
-    public Trousers(decimal price, string size, string material) : base(price, size)
-    {
-        Material = material;
-    }
-}
+        public Trousers(string material, int cost, string size)
+        {
+            if (string.IsNullOrEmpty(material))
+            {
+                throw new ArgumentException("Материал не может быть пустым или равным null", nameof(material));
+            }
+            if (cost <= 0)
+            {
+                throw new ArgumentException("Стоимость должна быть положительным числом", nameof(cost));
+            }
+            if (string.IsNullOrEmpty(size))
+            {
+                throw new ArgumentException("Размер не может быть пустым или равным null", nameof(size));
+            }
 
-public class Shirt : Clothing
-{
-    public int  SleeveLength { get; set; }
-
-    public Shirt(decimal price, string size, int sleeveLength) : base(price, size)
-    {
-        SleeveLength = sleeveLength;
-    }
-}
-
-public class ClothesList : List<Clothing>{}
-
-public static class ClothesListExtensions
-{
-
-    public static decimal TotalCostForSizeS(this IEnumerable<Clothing> list)
-    {
-        return list.Where(c => c.Size == "S").Sum(c => c.Price);
+            Material = material;
+            Cost = cost;
+            Size = size;
+        }
     }
 
-    public static decimal AverageShirtPrice(this IEnumerable<Clothing> list)
+    public class Shirt
     {
-        var shirts = list.OfType<Shirt>().ToArray();
-        return shirts.Any() ? shirts.Average(s => s.Price) : 0;
-    }
-}
+        public int SleeveLength { get; set; }
+        public int Cost { get; set; }
+        public string Size { get; set; }
 
-class Program
-{
-    static void Main()
+        public Shirt(int sleeveLength, int cost, string size)
+        {
+            if (sleeveLength <= 0)
+            {
+                throw new ArgumentException("Длина рукава должна быть положительным числом", nameof(sleeveLength));
+            }
+            if (cost <= 0)
+            {
+                throw new ArgumentException("Стоимость должна быть положительным числом", nameof(cost));
+            }
+            if (string.IsNullOrEmpty(size))
+            {
+                throw new ArgumentException("Размер не может быть пустым или равным null", nameof(size));
+            }
+
+            SleeveLength = sleeveLength;
+            Cost = cost;
+            Size = size;
+        }
+    }
+
+    public class ClothingList : List<object>
     {
-      var clothesList = new ClothesList
-      {
-          new Trousers(100, "S", "Шёлк"),
-          new Shirt(50, "S", 60),
-          new Trousers(200, "M", "Шерсть"),
-          new Shirt(150, "M", 70),
-          new Trousers(300, "S", "Полиэстер")
-      };
+        public int GetTotalCostOfSizeS()
+        {
+            return this.OfType<Trousers>()
+                .Where(t => t.Size == "S")
+                .Sum(t => t.Cost) +
+                this.OfType<Shirt>()
+                .Where(s => s.Size == "S")
+                .Sum(s => s.Cost);
+        }
 
-      var clothesSizeS = clothesList.Where(c => c.Size == "S").ToList();
-
-      Console.WriteLine("Введите новые цены для товаров размера S:");
-
-      foreach (var item in clothesSizeS)
-      {
-          Console.WriteLine($"Введите цену для {item.GetType().Name} (текущая цена {item.Price}):");
-          while (true)
-          {
-              string input = Console.ReadLine();
-
-              if (!decimal.TryParse(input, out decimal newPrice) || newPrice <= 0)
-              {
-                  Console.WriteLine("Ошибка: введите положительное число больше нуля.");
-                  continue;
-              }
-
-              item.Price = newPrice;
-              break;
-          }
-      }
-
-      Console.WriteLine("Обновленный список одежды:");
-      foreach (var item in clothesList)
-      {
-          Console.WriteLine($"Тип: {item.GetType().Name}, Размер: {item.Size}, Цена: {item.Price}");
-      }
-
-        Console.WriteLine($"Суммарная стоимость всех вещей размера S: {clothesList.TotalCostForSizeS()}");
-        Console.WriteLine($"Средняя стоимость рубашек: {clothesList.AverageShirtPrice()}");
+        public double GetAverageShirtCost()
+        {
+            return this.OfType<Shirt>()
+                .Average(s => s.Cost);
+        }
     }
-}
+
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            var clothingList = new ClothingList
+            {
+                new Trousers("Деним", 2000, "S"),
+                new Trousers("Хлопок", 1500, "M"),
+                new Shirt(60, 1000, "S"),
+                new Shirt(65, 1200, "M"),
+                new Trousers("Шерсть", 3000, "L")
+            };
+            Console.WriteLine("Суммарная стоимость всех вещей размера S: {0}", clothingList.GetTotalCostOfSizeS());
+            Console.WriteLine("Средняя стоимость рубашки: {0}", clothingList.GetAverageShirtCost());
+        }
+    }
